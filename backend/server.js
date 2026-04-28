@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8787;
-const host = process.env.HOST || '127.0.0.1';
+const host = process.env.HOST || '0.0.0.0';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
