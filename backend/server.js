@@ -1,10 +1,19 @@
-import 'dotenv/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8787;
 const host = process.env.HOST || '127.0.0.1';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
+const distDir = path.join(projectRoot, 'dist');
 
 app.use(cors());
 app.use(express.json());
@@ -76,6 +85,17 @@ app.post('/api/ai', async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown server error.',
     });
   }
+});
+
+app.use(express.static(distDir));
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    next();
+    return;
+  }
+
+  res.sendFile(path.join(distDir, 'index.html'));
 });
 
 app.listen(port, host, () => {

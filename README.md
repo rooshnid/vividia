@@ -11,3 +11,17 @@ Vividia is a React + Vite demo app for student goal planning with a soft, vision
 5. Run `npm run dev` in another terminal.
 
 If OpenAI or Google Calendar is unavailable, the app falls back to a local demo roadmap and shows a `Working offline` badge.
+
+## Railway deploy
+
+This repo is ready to deploy as a single Railway service.
+
+1. In Railway, create a new project from the GitHub repo.
+2. Add these variables in Railway:
+   - `OPENAI_API_KEY`
+   - `VITE_GOOGLE_CLIENT_ID`
+   - `VITE_GOOGLE_API_KEY`
+3. Let Railway build the app with `npm run build`.
+4. Let Railway start the app with `npm start`.
+
+The Express server serves the built Vite app and exposes the API routes from the same service, so you do not need separate frontend and backend Railway services.
