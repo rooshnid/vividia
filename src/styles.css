@@ -36,3 +36,27 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.confetti-piece {
+  position: absolute;
+  top: -10%;
+  width: 10px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7f77dd 0%, #1d9e75 100%);
+  animation: confetti-fall 1.8s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(240px) rotate(220deg);
+    opacity: 0;
+  }
+}

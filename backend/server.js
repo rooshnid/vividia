@@ -36,6 +36,52 @@ Output rules:
 - For media suggestions, use only titles + one-sentence original description.
 - If you cannot generate a field, use null - never omit the key.`;
 
+function tryParseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const firstBrace = typeof text === 'string' ? text.indexOf('{') : -1;
+    const lastBrace = typeof text === 'string' ? text.lastIndexOf('}') : -1;
+
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+async function callOpenAI(prompt) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: 1500,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || 'OpenAI request failed.');
+  }
+
+  return data?.choices?.[0]?.message?.content || '';
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
@@ -52,33 +98,22 @@ app.post('/api/ai', async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: 1500,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-      }),
-    });
+    let parsed = null;
 
-    const data = await response.json();
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const content = await callOpenAI(prompt);
+      parsed = tryParseJson(content);
+      if (parsed) {
+        break;
+      }
+    }
 
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: data?.error?.message || 'OpenAI request failed.',
+    if (!parsed) {
+      return res.status(502).json({
+        error: 'AI response could not be parsed cleanly.',
       });
     }
 
-    const content = data?.choices?.[0]?.message?.content;
-    const parsed = JSON.parse(content);
     return res.json(parsed);
   } catch (error) {
     return res.status(500).json({

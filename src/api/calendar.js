@@ -27,6 +27,10 @@ export function isGoogleConfigured() {
   return Boolean(GOOGLE_CLIENT_ID && GOOGLE_API_KEY);
 }
 
+export function getUserTimeZone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles';
+}
+
 export async function initGoogleCalendar() {
   if (!isGoogleConfigured()) {
     return false;
@@ -85,6 +89,7 @@ function formatTime(date) {
   return new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: getUserTimeZone(),
   }).format(date);
 }
 
@@ -110,7 +115,7 @@ export function parseFreeBlocks(busyBlocks, start, end) {
     free.push(`${formatTime(cursor)}–${formatTime(end)}`);
   }
 
-  return free.filter(Boolean);
+  return [...new Set(free.filter(Boolean))];
 }
 
 export async function getTodayFreeBlocks() {
@@ -119,7 +124,7 @@ export async function getTodayFreeBlocks() {
   endOfDay.setHours(23, 59, 0, 0);
 
   if (!window.gapi?.client?.calendar) {
-    return mockFreeBlocks();
+    return [];
   }
 
   const response = await window.gapi.client.calendar.freebusy.query({
@@ -142,13 +147,9 @@ export async function createCalendarEvent({ task, isoStart, isoEnd, goalTitle })
     calendarId: 'primary',
     resource: {
       summary: task,
-      start: { dateTime: isoStart, timeZone: 'America/Los_Angeles' },
-      end: { dateTime: isoEnd, timeZone: 'America/Los_Angeles' },
+      start: { dateTime: isoStart, timeZone: getUserTimeZone() },
+      end: { dateTime: isoEnd, timeZone: getUserTimeZone() },
       description: `Vividia goal task: ${goalTitle}`,
     },
   });
-}
-
-export function mockFreeBlocks() {
-  return ['9:00 AM–10:30 AM', '1:00 PM–2:00 PM', '4:00 PM–5:30 PM'];
 }

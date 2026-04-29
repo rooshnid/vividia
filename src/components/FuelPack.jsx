@@ -4,7 +4,7 @@ function searchUrl(base, query) {
 
 export default function FuelPack({ fuelPack }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
       <section className="rounded-3xl border border-vividia-line bg-white p-6 shadow-sm">
         <p className="text-sm font-medium text-vividia-muted">Affirmation</p>
         <p className="mt-4 text-2xl font-medium leading-relaxed text-vividia-ink">{fuelPack.affirmation}</p>

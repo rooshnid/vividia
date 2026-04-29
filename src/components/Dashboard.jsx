@@ -7,6 +7,30 @@ import FuelPack from './FuelPack';
 
 const tabs = ['Today', 'Roadmap', 'Vision Board', 'Progress', 'Fuel Pack'];
 
+function StatusCard({ panel }) {
+  const toneClasses = {
+    purple: 'border-[#DCD7FF] bg-[#F6F3FF] text-vividia-purple',
+    teal: 'border-[#BDE8D8] bg-[#F2FBF7] text-vividia-teal',
+    amber: 'border-[#F4D7A5] bg-[#FFF7E7] text-[#9A6A17]',
+    coral: 'border-[#FFD3CB] bg-[#FFF4F1] text-[#B75244]',
+  };
+
+  return (
+    <div className={`rounded-3xl border p-5 shadow-sm ${toneClasses[panel.tone] || toneClasses.purple}`}>
+      <p className="text-sm font-medium uppercase tracking-[0.16em]">{panel.title}</p>
+      <p className="mt-2 text-sm leading-6">{panel.body}</p>
+      {panel.action ? (
+        <button
+          onClick={panel.action}
+          className="mt-4 rounded-full bg-white/85 px-4 py-2 text-sm font-medium text-vividia-ink shadow-sm"
+        >
+          {panel.actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function Dashboard({
   activeTab,
   setActiveTab,
@@ -19,6 +43,14 @@ export default function Dashboard({
   weekCompletion,
   offline,
   onReconnectCalendar,
+  statusPanels,
+  errorCard,
+  onRetryPlan,
+  onLoadTomorrowTasks,
+  allTodayTasksComplete,
+  onEditGoal,
+  completedCount,
+  totalTasks,
 }) {
   const contentMap = {
     Today: (
@@ -27,6 +59,11 @@ export default function Dashboard({
         completedTaskIds={completedTaskIds}
         onToggleTask={onToggleTask}
         onScheduleTask={onScheduleTask}
+        errorCard={errorCard}
+        onRetryPlan={onRetryPlan}
+        allTodayTasksComplete={allTodayTasksComplete}
+        streakDays={streakDays}
+        onLoadTomorrowTasks={onLoadTomorrowTasks}
       />
     ),
     Roadmap: <RoadmapTab roadmap={goalData.roadmap} />,
@@ -36,8 +73,9 @@ export default function Dashboard({
         progress={dailyPlan.progress}
         streakDays={streakDays}
         weekCompletion={weekCompletion}
-        completedCount={completedTaskIds.length}
-        totalTasks={goalData.allTaskIds.length}
+        completedCount={completedCount}
+        totalTasks={totalTasks}
+        completedGoal={dailyPlan.progress.percent_complete >= 100}
       />
     ),
     'Fuel Pack': <FuelPack fuelPack={goalData.fuel_pack} />,
@@ -45,7 +83,7 @@ export default function Dashboard({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header className="flex flex-col gap-5 pt-16 lg:flex-row lg:items-end lg:justify-between lg:pt-10">
         <div>
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-vividia-purple">{goalData.goal_title}</p>
           <h1 className="mt-2 text-3xl font-medium text-vividia-ink md:text-4xl">{dailyPlan.greeting}</h1>
@@ -60,6 +98,12 @@ export default function Dashboard({
               Working offline
             </span>
           ) : null}
+          <button
+            onClick={onEditGoal}
+            className="rounded-full border border-vividia-line bg-white px-4 py-2 text-sm font-medium text-vividia-muted shadow-sm"
+          >
+            Regenerate plan
+          </button>
         </div>
       </header>
 
@@ -71,6 +115,14 @@ export default function Dashboard({
           onReconnect={onReconnectCalendar}
         />
       </div>
+
+      {statusPanels.length ? (
+        <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
+          {statusPanels.map((panel) => (
+            <StatusCard key={`${panel.title}-${panel.body}`} panel={panel} />
+          ))}
+        </div>
+      ) : null}
 
       <nav className="scrollbar-hide mt-8 overflow-x-auto">
         <div className="inline-flex min-w-full gap-2 rounded-full bg-white/80 p-2 shadow-sm backdrop-blur">

@@ -1,6 +1,6 @@
 export default function RoadmapTab({ roadmap }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+    <div className="grid gap-6 xl:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
       <section className="rounded-3xl border border-vividia-line bg-white p-6 shadow-sm">
         <h3 className="text-lg font-medium text-vividia-ink">This month</h3>
         <div className="mt-5 grid gap-4">
@@ -32,7 +32,7 @@ export default function RoadmapTab({ roadmap }) {
       </section>
       <section className="rounded-3xl border border-vividia-line bg-white p-6 shadow-sm xl:col-span-2">
         <h3 className="text-lg font-medium text-vividia-ink">This week</h3>
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
           {roadmap.this_week.map((day) => (
             <div key={day.day} className="rounded-3xl bg-[#FCFCFF] p-4">
               <p className="text-sm font-medium text-vividia-purple">{day.day}</p>

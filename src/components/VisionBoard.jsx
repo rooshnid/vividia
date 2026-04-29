@@ -10,7 +10,7 @@ export default function VisionBoard({ visionBoard }) {
     <div className={`relative overflow-hidden rounded-[2rem] bg-gradient-to-br ${themeMap[visionBoard.color_theme] || themeMap.purple} p-8 text-white shadow-glow`}>
       <div className="glass-orb left-8 top-12 h-24 w-24 bg-white/25 animate-float" />
       <div className="glass-orb bottom-12 right-8 h-32 w-32 bg-black/10 animate-float" />
-      <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="relative grid gap-10 lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
         <div>
           <p className="text-sm font-medium uppercase tracking-[0.24em] text-white/75">Vision board</p>
           <h2 className="mt-4 max-w-lg text-4xl font-medium leading-tight md:text-5xl">{visionBoard.hero_phrase}</h2>

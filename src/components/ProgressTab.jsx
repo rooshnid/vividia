@@ -30,12 +30,12 @@ function ProgressRing({ value }) {
   );
 }
 
-export default function ProgressTab({ progress, streakDays, weekCompletion, completedCount, totalTasks }) {
+export default function ProgressTab({ progress, streakDays, weekCompletion, completedCount, totalTasks, completedGoal }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+    <div className="grid gap-6 lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
       <section className="rounded-3xl border border-vividia-line bg-white p-6 shadow-sm">
         <ProgressRing value={progress.percent_complete} />
-        <div className="mt-6 grid grid-cols-2 gap-3 text-center">
+        <div className="mt-6 grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 text-center">
           <div className="rounded-3xl bg-vividia-bg p-4">
             <p className="text-2xl font-medium text-vividia-ink">{completedCount}</p>
             <p className="text-sm text-vividia-muted">done so far</p>
@@ -47,6 +47,15 @@ export default function ProgressTab({ progress, streakDays, weekCompletion, comp
         </div>
       </section>
       <section className="space-y-6">
+        {completedGoal ? (
+          <div className="rounded-3xl border border-[#DCD7FF] bg-[#F6F3FF] p-6 shadow-sm">
+            <p className="text-sm font-medium uppercase tracking-[0.16em] text-vividia-purple">Completed-goal state</p>
+            <h3 className="mt-2 text-2xl font-medium text-vividia-ink">You reached the current finish line.</h3>
+            <p className="mt-2 text-sm leading-6 text-vividia-muted">
+              This version of the roadmap is complete. You can regenerate a fresh stretch goal any time without losing the work you already did.
+            </p>
+          </div>
+        ) : null}
         <div className="rounded-3xl border border-vividia-line bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-vividia-muted">Current streak</p>
           <div className="mt-2 flex items-end gap-3">
@@ -70,7 +79,7 @@ export default function ProgressTab({ progress, streakDays, weekCompletion, comp
         </div>
         <div className="rounded-3xl border border-vividia-line bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-vividia-muted">Deadline view</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
             <div className="rounded-3xl bg-vividia-bg p-4">
               <p className="text-2xl font-medium text-vividia-ink">{progress.days_to_deadline}</p>
               <p className="text-sm text-vividia-muted">days left</p>
