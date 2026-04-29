@@ -21,6 +21,11 @@ export default function VisionBoard({ visionBoard }) {
               </span>
             ))}
           </div>
+          <div className="mt-8 rounded-[1.5rem] border border-white/20 bg-black/10 p-5 backdrop-blur">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">Dream scene</p>
+            <p className="mt-3 text-lg font-medium leading-relaxed">{visionBoard.dream_scene_caption}</p>
+            <p className="mt-3 text-sm leading-6 text-white/78">{visionBoard.dream_scene_prompt}</p>
+          </div>
         </div>
         <div className="rounded-[1.75rem] border border-white/20 bg-white/10 p-6 backdrop-blur">
           <p className="text-sm font-medium text-white/75">Milestones to celebrate</p>

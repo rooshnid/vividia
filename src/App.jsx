@@ -14,6 +14,17 @@ const HOURS_ERROR = 'Set at least 1 hour a week so Vividia can build a real plan
 const TIGHT_WARNING = "This is tight — here's a focused minimal plan instead of a full roadmap.";
 
 const VAGUE_GOAL_PATTERNS = [/^be better$/i, /^be happier$/i, /^improve$/i, /^do better$/i, /^success$/i, /^grow$/i];
+const GENERIC_OUTPUT_PATTERNS = [
+  /clarify the target/i,
+  /build proof/i,
+  /practice and refine/i,
+  /ship the next step/i,
+  /refresh top priorities/i,
+  /improve one proof point/i,
+  /practice one visible skill/i,
+  /make the goal concrete/i,
+  /visible moves/i,
+];
 
 function getTodayDateInput() {
   const now = new Date();
@@ -43,6 +54,14 @@ function formatTargetDate(value) {
 
 function ensureText(value, fallback) {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+function preferSpecificText(value, fallback) {
+  const text = ensureText(value, fallback);
+  if (GENERIC_OUTPUT_PATTERNS.some((pattern) => pattern.test(text))) {
+    return fallback;
+  }
+  return text;
 }
 
 function uniqueStrings(values) {
@@ -160,84 +179,314 @@ function findFittingBlock(blocks, duration, usedBlocks = new Set()) {
   return blocks.find((block) => !usedBlocks.has(block) && getBlockDurationMinutes(block) >= duration) || null;
 }
 
-function buildMicroTasks(goalTitle) {
-  const theme = ensureText(goalTitle, 'your goal').toLowerCase();
-  return [
-    {
-      id: 'micro-1',
-      task: 'Write one tiny next step',
-      duration_min: 5,
-      why: `Naming one next move keeps ${theme} real even on a packed day.`,
-      energy_level: 'low',
-      calendar_block: null,
-      carry_over: true,
-    },
-    {
-      id: 'micro-2',
-      task: 'Tidy one resource link',
-      duration_min: 7,
-      why: 'Small cleanup keeps friction low when you get a better window later.',
-      energy_level: 'low',
-      calendar_block: null,
-      carry_over: true,
-    },
-    {
-      id: 'micro-3',
-      task: 'Draft one check-in note',
-      duration_min: 8,
-      why: 'A quick message or note can keep momentum alive without a long block.',
-      energy_level: 'low',
-      calendar_block: null,
-      carry_over: true,
-    },
-  ];
-}
+function inferGoalProfile(form) {
+  const goalText = `${form?.goal || ''} ${form?.currentSituation || ''}`.toLowerCase();
 
-function buildFallbackTasks(goalTitle, freeBlocks, microMode) {
-  if (microMode) {
-    return buildMicroTasks(goalTitle);
+  if (/(apm|associate product manager|product manager|pm role|pm internship)/.test(goalText)) {
+    return {
+      key: 'apm',
+      titleFallback: 'APM role by deadline',
+      monthly: [
+        { focus: 'Build your PM story', key_action: 'Turn one project into a product case study with metrics, tradeoffs, and user thinking.' },
+        { focus: 'Upgrade the application stack', key_action: 'Tailor your PM resume, portfolio, and cold outreach for the companies you actually want.' },
+        { focus: 'Create warm traction', key_action: 'Book coffee chats and ask for concrete feedback on your PM materials.' },
+        { focus: 'Practice product interviews', key_action: 'Run product sense, execution, and prioritization prompts out loud.' },
+      ],
+      yearly: [
+        'Product portfolio feels recruiter-ready',
+        'Coffee chat pipeline is active',
+        'Interview answers sound calm and sharp',
+      ],
+      tasks: [
+        ['Draft one product portfolio case study section', 30, 'medium', 'A real case study proves product thinking better than generic claims.'],
+        ['Edit two PM resume bullets with metrics', 20, 'medium', 'Concrete metrics make your product work easier to trust.'],
+        ['Send one coffee chat request on LinkedIn', 15, 'low', 'Warm outreach creates opportunities applications cannot.'],
+        ['Research one target company product deeply', 25, 'medium', 'Product-specific notes improve outreach and interview quality.'],
+        ['Practice one product sense question aloud', 30, 'high', 'Verbal reps make your PM thinking more fluent under pressure.'],
+        ['Review one mock PM answer for clarity', 20, 'medium', 'Tighter structure helps you sound more thoughtful and decisive.'],
+      ],
+      microTasks: [
+        ['Save one PM job posting and note why it fits', 5, 'low', 'One clear target keeps the search grounded.'],
+        ['Rewrite one PM impact verb', 7, 'low', 'A better verb can lift a whole bullet.'],
+        ['Draft one coffee chat question', 8, 'low', 'One thoughtful question makes outreach easier to send.'],
+      ],
+      visionKeywords: ['product case study deck', 'coffee chat notebook', 'offer letter screenshot'],
+      visionPrompt: 'A warm editorial scene of a college student receiving an APM offer, laptop open to a product portfolio, notebook with coffee chat notes, grounded success, soft morning light.',
+      heroPhrase: 'Ship The PM Version',
+    };
   }
 
-  return [
-    {
-      id: 't1',
-      task: 'Refresh top priorities',
-      duration_min: 20,
-      why: `Clarity makes ${goalTitle.toLowerCase()} feel moveable today.`,
-      energy_level: 'medium',
-      calendar_block: freeBlocks[0] || null,
-      carry_over: false,
-    },
-    {
-      id: 't2',
-      task: 'Improve one proof point',
-      duration_min: 25,
-      why: 'A stronger artifact makes the plan easier to believe and show.',
-      energy_level: 'medium',
-      calendar_block: freeBlocks[1] || freeBlocks[0] || null,
-      carry_over: false,
-    },
-    {
-      id: 't3',
-      task: 'Practice one visible skill',
-      duration_min: 30,
-      why: 'Visible reps turn hope into evidence quickly.',
-      energy_level: 'high',
-      calendar_block: freeBlocks[2] || null,
-      carry_over: false,
-    },
-  ];
+  if (/(internship|software internship|swe|engineer|developer|tech role|coding)/.test(goalText)) {
+    return {
+      key: 'internship',
+      titleFallback: 'Internship offer by deadline',
+      monthly: [
+        { focus: 'Sharpen your application story', key_action: 'Turn resume bullets and project writeups into proof of engineering impact.' },
+        { focus: 'Polish visible work', key_action: 'Upgrade one portfolio project and make the README recruiter-friendly.' },
+        { focus: 'Open referral paths', key_action: 'Reach out to alumni, classmates, or engineers for feedback and intros.' },
+        { focus: 'Practice the interview stack', key_action: 'Balance coding reps, debugging, and behavioral stories each week.' },
+      ],
+      yearly: [
+        'Resume and GitHub feel polished',
+        'Referral and outreach funnel is active',
+        'Interview reps feel calm and repeatable',
+      ],
+      tasks: [
+        ['Tailor resume for one target role', 25, 'medium', 'Role-specific edits usually matter more than volume.'],
+        ['Polish one project README and demo', 20, 'medium', 'A clean project page gives recruiters something concrete to trust.'],
+        ['Apply to one high-fit internship', 20, 'medium', 'Focused applications outperform rushed mass submissions.'],
+        ['Send one referral or alumni outreach note', 15, 'low', 'Warm context creates more leverage than silent applying.'],
+        ['Practice one LeetCode pattern intentionally', 30, 'high', 'Pattern fluency lowers stress when interviews arrive.'],
+        ['Refine one behavioral story with outcomes', 20, 'medium', 'Good stories make your technical work more memorable.'],
+      ],
+      microTasks: [
+        ['Bookmark one strong-fit role', 5, 'low', 'One saved role keeps momentum visible.'],
+        ['Fix one resume line', 6, 'low', 'Small polish compounds fast.'],
+        ['Draft one outreach opening line', 8, 'low', 'A first sentence lowers the barrier to reaching out.'],
+      ],
+      visionKeywords: ['offer email glow', 'GitHub portfolio open', 'campus to tech energy'],
+      visionPrompt: 'A soft cinematic scene of a student opening a dream software internship offer, laptop showing GitHub and resume, sunrise light, grounded pride.',
+      heroPhrase: 'You Belong In Tech',
+    };
+  }
+
+  if (/(grad school|graduate school|masters|phd|med school|law school|statement of purpose|sop|gre|mcat|lsat|application)/.test(goalText)) {
+    return {
+      key: 'grad-school',
+      titleFallback: 'Grad school application plan',
+      monthly: [
+        { focus: 'Clarify program fit', key_action: 'Shortlist programs and write why each one fits your direction.' },
+        { focus: 'Build the application spine', key_action: 'Draft your statement and resume around one clear through-line.' },
+        { focus: 'Secure strong support', key_action: 'Ask recommenders early and send context they can actually use.' },
+        { focus: 'Finalize with calm review', key_action: 'Check essays, deadlines, and submission details before the rush.' },
+      ],
+      yearly: [
+        'Program shortlist feels intentional',
+        'Application materials sound like one coherent story',
+        'Recommendations and deadlines are fully under control',
+      ],
+      tasks: [
+        ['Research one target program deeply', 25, 'medium', 'Specific program fit notes make every essay stronger.'],
+        ['Draft one statement of purpose paragraph', 30, 'high', 'A real paragraph beats endless vague planning.'],
+        ['Update one section of your academic resume', 20, 'medium', 'Clear positioning strengthens the whole application.'],
+        ['Outline one recommender request email', 15, 'low', 'A prepared ask is easier to send and easier to answer.'],
+        ['Review one application deadline requirement', 15, 'low', 'Tiny deadline checks prevent avoidable stress later.'],
+        ['Practice one why-this-program answer', 20, 'medium', 'Talking through your reasoning builds clarity and confidence.'],
+      ],
+      microTasks: [
+        ['Save one note about program fit', 5, 'low', 'One note can unlock the next essay line.'],
+        ['List one SOP theme', 7, 'low', 'A single theme makes the draft easier to start.'],
+        ['Draft one recommender sentence', 8, 'low', 'Starting small makes the ask less intimidating.'],
+      ],
+      visionKeywords: ['acceptance email', 'campus walkway', 'library ambition'],
+      visionPrompt: 'An elegant, grounded scene of a student receiving a graduate school acceptance, notebook and draft essays nearby, warm natural light, proud but calm.',
+      heroPhrase: 'Step Into The Program',
+    };
+  }
+
+  if (/(travel|study abroad|move abroad|solo trip|visa|flight|passport|savings)/.test(goalText)) {
+    return {
+      key: 'travel',
+      titleFallback: 'Travel goal by deadline',
+      monthly: [
+        { focus: 'Lock the destination plan', key_action: 'Choose the route, budget shape, and must-do experiences.' },
+        { focus: 'Build the travel cushion', key_action: 'Set a savings target and cut one spending leak.' },
+        { focus: 'Handle logistics early', key_action: 'Research documents, flights, and timing while options stay open.' },
+        { focus: 'Make the trip tangible', key_action: 'Book the next concrete piece that lowers uncertainty.' },
+      ],
+      yearly: [
+        'Trip budget feels believable',
+        'Flights and documents are mapped',
+        'The move from dreaming to booking is underway',
+      ],
+      tasks: [
+        ['Price one flight window', 20, 'medium', 'Real numbers make the trip easier to believe and plan.'],
+        ['Update one travel savings tracker', 15, 'low', 'Visible savings progress keeps the dream grounded.'],
+        ['Research one visa or document step', 20, 'medium', 'Early logistics save future stress.'],
+        ['Build one day of itinerary ideas', 25, 'medium', 'Planning one slice makes the whole trip feel closer.'],
+        ['Cut one weekly expense for travel', 10, 'low', 'A small cut can become a real buffer over time.'],
+        ['Message one past traveler for advice', 15, 'low', 'First-hand advice beats generic travel noise.'],
+      ],
+      microTasks: [
+        ['Save one flight alert', 5, 'low', 'A tiny setup can unlock a future deal.'],
+        ['Move $5 to travel savings', 5, 'low', 'A small transfer keeps the identity active.'],
+        ['Screenshot one itinerary idea', 7, 'low', 'One visual keeps the trip emotionally real.'],
+      ],
+      visionKeywords: ['boarding pass moment', 'sunlit city street', 'passport confidence'],
+      visionPrompt: 'A dreamy but realistic vision-board image of a student stepping into a long-awaited trip, suitcase, boarding pass, soft golden light, grounded joy.',
+      heroPhrase: 'Book The Life You Want',
+    };
+  }
+
+  if (/(creator|content|youtube|podcast|writing|writer|artist|design|fashion|photography|creative)/.test(goalText)) {
+    return {
+      key: 'creative',
+      titleFallback: 'Creative career momentum',
+      monthly: [
+        { focus: 'Define your body of work', key_action: 'Choose the project or series that best signals your taste.' },
+        { focus: 'Publish consistently', key_action: 'Ship one finished piece instead of endless refining.' },
+        { focus: 'Create feedback loops', key_action: 'Put work where people can respond and ask for honest critique.' },
+        { focus: 'Package the work professionally', key_action: 'Update the portfolio, bio, and links that represent you.' },
+      ],
+      yearly: [
+        'Portfolio feels like a real body of work',
+        'Publishing rhythm is visible',
+        'Audience and feedback loops are active',
+      ],
+      tasks: [
+        ['Outline one portfolio piece', 25, 'medium', 'Structure helps the creative work feel finishable.'],
+        ['Edit one published asset', 20, 'medium', 'One cleaner asset raises the quality of everything around it.'],
+        ['Post one progress update', 15, 'low', 'Visible momentum invites feedback and accountability.'],
+        ['Research one strong reference', 20, 'medium', 'Studying good work sharpens your own decisions.'],
+        ['Write one creator bio line', 10, 'low', 'Clear positioning makes your work easier to share.'],
+        ['Ask one person for critique', 15, 'low', 'Useful critique compresses growth.'],
+      ],
+      microTasks: [
+        ['Save one reference image', 5, 'low', 'One reference can unlock the next creative choice.'],
+        ['Rename one portfolio folder', 6, 'low', 'Small organization lowers creative friction.'],
+        ['Draft one caption line', 8, 'low', 'A sentence is enough to restart the flow.'],
+      ],
+      visionKeywords: ['portfolio spotlight', 'creative studio desk', 'published work energy'],
+      visionPrompt: 'A beautiful editorial image of a student stepping into a creative career, portfolio work displayed confidently, warm studio light, grounded artistic momentum.',
+      heroPhrase: 'Make The Work Visible',
+    };
+  }
+
+  return {
+    key: 'general',
+    titleFallback: ensureText(form?.goal, 'Focused next-step plan'),
+    monthly: [
+      { focus: 'Make the goal concrete', key_action: 'Name the clearest deliverable that proves progress this month.' },
+      { focus: 'Build visible evidence', key_action: 'Create or improve one artifact you can point to.' },
+      { focus: 'Ask for real-world feedback', key_action: 'Get one outside perspective on what is working and what is not.' },
+      { focus: 'Turn effort into rhythm', key_action: 'Choose one weekly habit that keeps the goal alive.' },
+    ],
+    yearly: [
+      'The goal has a visible proof point',
+      'Outside feedback has sharpened the plan',
+      'Your rhythm feels more real than the original idea',
+    ],
+    tasks: [
+      ['Define the next visible milestone', 20, 'medium', 'A named milestone keeps the goal from staying abstract.'],
+      ['Improve one supporting asset', 25, 'medium', 'One better asset creates momentum you can see.'],
+      ['Reach out for one piece of feedback', 15, 'low', 'Outside eyes help the plan get sharper faster.'],
+      ['Practice the skill that matters most', 30, 'high', 'Repetition makes the goal more believable and less abstract.'],
+      ['Research one real example', 20, 'medium', 'Specific examples keep your next step grounded.'],
+      ['Capture one win from this week', 10, 'low', 'Naming progress makes it easier to continue.'],
+    ],
+    microTasks: [
+      ['Name one next action', 5, 'low', 'One named move is enough to keep going.'],
+      ['Tidy one related resource', 7, 'low', 'Small cleanup lowers friction for later.'],
+      ['Write one reminder to future you', 8, 'low', 'A short note helps you restart faster tomorrow.'],
+    ],
+    visionKeywords: ['future-self clarity', 'calm workspace', 'momentum building'],
+    visionPrompt: 'A grounded aspiration scene showing a student stepping into a meaningful future goal, calm workspace, warm light, steady progress.',
+    heroPhrase: 'Make It Real',
+  };
 }
 
-function normalizeTaskList(tasks, freeBlocks, prefix, fallbackGoalTitle) {
+function buildPersonalizedMonthly(profile, tightPlan) {
+  if (tightPlan) {
+    return [
+      { week: 1, focus: `Triage the ${profile.key} path`, key_action: profile.monthly[0].key_action },
+      { week: 2, focus: 'Protect one high-leverage move', key_action: profile.monthly[1]?.key_action || profile.monthly[0].key_action },
+      { week: 3, focus: 'Get one outside signal', key_action: profile.monthly[2]?.key_action || 'Ask for one concrete piece of feedback.' },
+      { week: 4, focus: 'Ship the most credible version', key_action: profile.monthly[3]?.key_action || 'Send the version that is ready enough to move.' },
+    ];
+  }
+
+  return profile.monthly.map((item, index) => ({
+    week: index + 1,
+    focus: item.focus,
+    key_action: item.key_action,
+  }));
+}
+
+function buildPersonalizedYearly(profile, deadline) {
+  const labels = ['Next checkpoint', 'Midpoint traction', formatTargetDate(deadline)];
+  return profile.yearly.slice(0, 3).map((milestone, index) => ({
+    milestone,
+    month_target: labels[index] || formatTargetDate(deadline),
+  }));
+}
+
+function buildMicroTasks(form) {
+  const profile = inferGoalProfile(form);
+  return profile.microTasks.map(([task, duration, energy, why], index) => ({
+    id: `micro-${profile.key}-${index + 1}`,
+    task,
+    duration_min: duration,
+    why,
+    energy_level: energy,
+    calendar_block: null,
+    carry_over: true,
+  }));
+}
+
+function buildFallbackTasks(form, freeBlocks, microMode) {
+  const profile = inferGoalProfile(form);
+  if (microMode) {
+    return buildMicroTasks(form);
+  }
+
+  return profile.tasks.slice(0, 4).map(([task, duration, energy, why], index) => ({
+    id: `${profile.key}-task-${index + 1}`,
+    task,
+    duration_min: duration,
+    why,
+    energy_level: energy,
+    calendar_block: freeBlocks[index] || null,
+    carry_over: false,
+  }));
+}
+
+function buildThisWeekTasks(form, freeBlocks, microMode) {
+  const profile = inferGoalProfile(form);
+  const source = microMode ? profile.microTasks : profile.tasks;
+  return source.map(([task, duration, energy, why], index) => ({
+    id: `${profile.key}-week-${index + 1}`,
+    task,
+    duration_min: microMode ? clamp(duration, 5, 10) : duration,
+    why,
+    energy_level: energy,
+    calendar_block: freeBlocks[index % Math.max(1, freeBlocks.length)] || null,
+    carry_over: microMode || !freeBlocks[index % Math.max(1, freeBlocks.length)],
+  }));
+}
+
+function normalizeVisionBoard(data, form, topLevelTheme) {
+  const profile = inferGoalProfile(form);
+  return {
+    hero_phrase: ensureText(data?.hero_phrase, profile.heroPhrase),
+    visual_keywords: uniqueStrings(data?.visual_keywords).slice(0, 3).length
+      ? uniqueStrings(data.visual_keywords).slice(0, 3)
+      : profile.visionKeywords,
+    milestones_to_celebrate: uniqueStrings(data?.milestones_to_celebrate).slice(0, 3).length
+      ? uniqueStrings(data.milestones_to_celebrate).slice(0, 3)
+      : [
+          `First visible ${profile.key === 'apm' ? 'portfolio win' : 'proof point'}`,
+          `A week where the ${profile.key} plan feels real`,
+          'The moment the opportunity finally lands',
+        ],
+    dream_scene_prompt: ensureText(data?.dream_scene_prompt, profile.visionPrompt),
+    dream_scene_caption: ensureText(
+      data?.dream_scene_caption,
+      `A generated dream-scene prompt for ${ensureText(form.goal, profile.titleFallback).toLowerCase()}.`,
+    ),
+    color_theme: ['purple', 'teal', 'coral', 'amber'].includes(data?.color_theme) ? data.color_theme : topLevelTheme,
+  };
+}
+
+function normalizeTaskList(tasks, freeBlocks, prefix, form) {
   const blocks = uniqueStrings(freeBlocks);
   const maxBlockDuration = Math.max(0, ...blocks.map(getBlockDurationMinutes));
   const microMode = blocks.length === 0 || maxBlockDuration < 15;
   const usedBlocks = new Set();
-  const source = Array.isArray(tasks) && tasks.length ? tasks : buildFallbackTasks(fallbackGoalTitle, blocks, microMode);
+  const fallbackTasks = buildFallbackTasks(form, blocks, microMode);
+  const source = Array.isArray(tasks) && tasks.length ? tasks : fallbackTasks;
 
   return source.slice(0, microMode ? 3 : 4).map((task, index) => {
-    const fallback = buildFallbackTasks(fallbackGoalTitle, blocks, microMode)[index % 3];
+    const fallback = fallbackTasks[index % fallbackTasks.length];
     const durationMin = clamp(
       Number(task?.duration_min) || fallback.duration_min,
       microMode ? 5 : 10,
@@ -258,9 +507,9 @@ function normalizeTaskList(tasks, freeBlocks, prefix, fallbackGoalTitle) {
 
     return {
       id: ensureText(task?.id, `${prefix}-${index + 1}`),
-      task: ensureText(task?.task, fallback.task),
+      task: preferSpecificText(task?.task, fallback.task),
       duration_min: durationMin,
-      why: ensureText(task?.why, fallback.why),
+      why: preferSpecificText(task?.why, fallback.why),
       energy_level: energyLevel,
       calendar_block: calendarBlock,
       carry_over: carryOver,
@@ -268,54 +517,48 @@ function normalizeTaskList(tasks, freeBlocks, prefix, fallbackGoalTitle) {
   });
 }
 
-function buildWeekFromToday(todayTasks) {
+function buildWeekFromToday(todayTasks, form, freeBlocks) {
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const profileWeekTasks = buildThisWeekTasks(form, freeBlocks, todayTasks.every((task) => task.duration_min <= 10));
   return weekdays.map((day, index) => ({
     day,
-    tasks: todayTasks.slice(index % Math.max(1, todayTasks.length - 1), (index % Math.max(1, todayTasks.length - 1)) + 2),
+    tasks: [
+      profileWeekTasks[index % profileWeekTasks.length],
+      profileWeekTasks[(index + 2) % profileWeekTasks.length],
+    ].filter(Boolean).map((task, innerIndex) => ({
+      ...task,
+      id: `${task.id}-${day.toLowerCase()}-${innerIndex + 1}`,
+    })),
   }));
 }
 
 function normalizeGoalData(data, form, freeBlocks, validation) {
   const tightPlan = validation.tightPlan || validation.impossibleScope;
-  const todayTasks = normalizeTaskList(data?.roadmap?.today, freeBlocks, 'goal-today', form.goal);
-  const defaultYearly = tightPlan
-    ? [
-        { milestone: 'Lock a minimal priority path', month_target: formatTargetDate(form.deadline) },
-        { milestone: 'Protect a few high-value reps', month_target: formatTargetDate(form.deadline) },
-      ]
-    : [
-        { milestone: 'First proof point feels polished', month_target: 'Next month' },
-        { milestone: 'Application or portfolio rhythm feels steady', month_target: 'Midway checkpoint' },
-        { milestone: 'You are ready to submit with confidence', month_target: formatTargetDate(form.deadline) },
-      ];
+  const profile = inferGoalProfile(form);
+  const todayTasks = normalizeTaskList(data?.roadmap?.today, freeBlocks, 'goal-today', form);
+  const defaultYearly = buildPersonalizedYearly(profile, form.deadline);
 
   const monthly = Array.isArray(data?.roadmap?.monthly) && data.roadmap.monthly.length
     ? data.roadmap.monthly.slice(0, 4).map((item, index) => ({
         week: Number(item?.week) || index + 1,
-        focus: ensureText(item?.focus, tightPlan ? 'Protect the highest-value move' : 'Make the goal concrete'),
-        key_action: ensureText(item?.key_action, tightPlan ? 'Choose the one move that still matters this week.' : 'Do the next visible task.'),
+        focus: preferSpecificText(item?.focus, buildPersonalizedMonthly(profile, tightPlan)[index]?.focus || profile.monthly[0].focus),
+        key_action: preferSpecificText(item?.key_action, buildPersonalizedMonthly(profile, tightPlan)[index]?.key_action || profile.monthly[0].key_action),
       }))
-    : [
-        { week: 1, focus: tightPlan ? 'Tight timeline triage' : 'Clarify the target', key_action: 'Name the one output that matters most first.' },
-        { week: 2, focus: 'Build proof', key_action: 'Make one visible improvement you can point to.' },
-        { week: 3, focus: 'Practice and refine', key_action: 'Turn effort into something repeatable.' },
-        { week: 4, focus: 'Ship the next step', key_action: 'Send the version that is ready enough to move.' },
-      ];
+    : buildPersonalizedMonthly(profile, tightPlan);
 
   const yearly = Array.isArray(data?.roadmap?.yearly) && data.roadmap.yearly.length
     ? data.roadmap.yearly.slice(0, 3).map((item, index) => ({
-        milestone: ensureText(item?.milestone, defaultYearly[index]?.milestone || 'Important checkpoint'),
+        milestone: preferSpecificText(item?.milestone, defaultYearly[index]?.milestone || 'Important checkpoint'),
         month_target: ensureText(item?.month_target, defaultYearly[index]?.month_target || formatTargetDate(form.deadline)),
       }))
     : defaultYearly;
 
   const thisWeek = Array.isArray(data?.roadmap?.this_week) && data.roadmap.this_week.length
     ? data.roadmap.this_week.slice(0, 7).map((day, index) => ({
-        day: ensureText(day?.day, buildWeekFromToday(todayTasks)[index]?.day || 'Day'),
-        tasks: normalizeTaskList(day?.tasks, freeBlocks, `week-${index + 1}`, form.goal).slice(0, 2),
+        day: ensureText(day?.day, buildWeekFromToday(todayTasks, form, freeBlocks)[index]?.day || 'Day'),
+        tasks: normalizeTaskList(day?.tasks, freeBlocks, `week-${index + 1}`, form).slice(0, 2),
       }))
-    : buildWeekFromToday(todayTasks);
+    : buildWeekFromToday(todayTasks, form, freeBlocks);
 
   const books = (Array.isArray(data?.fuel_pack?.books) ? data.fuel_pack.books : []).slice(0, 2).map((book, index) => ({
     title: ensureText(book?.title, index === 0 ? 'Designing Your Life' : 'The 2-Hour Job Search'),
@@ -330,7 +573,7 @@ function normalizeGoalData(data, form, freeBlocks, validation) {
   }));
 
   const normalized = {
-    goal_title: ensureText(data?.goal_title, tightPlan ? 'Focused next-step plan' : 'Top internship by August'),
+    goal_title: ensureText(data?.goal_title, tightPlan ? `Focused ${profile.key} plan` : profile.titleFallback),
     goal_summary: ensureText(
       data?.goal_summary,
       tightPlan
@@ -350,7 +593,7 @@ function normalizeGoalData(data, form, freeBlocks, validation) {
         data?.fuel_pack?.affirmation,
         'You do not need a perfect week. You need the next honest move.',
       ),
-      books: books.length ? books : buildFallbackTasks(form.goal, freeBlocks, true).slice(0, 2).map((_, index) => ({
+      books: books.length ? books : buildFallbackTasks(form, freeBlocks, true).slice(0, 2).map((_, index) => ({
         title: index === 0 ? 'Designing Your Life' : 'The 2-Hour Job Search',
         author: index === 0 ? 'Bill Burnett and Dave Evans' : 'Steve Dalton',
         why: 'It gives you a practical lens for turning ambition into experiments.',
@@ -361,20 +604,11 @@ function normalizeGoalData(data, form, freeBlocks, validation) {
       playlist_mood: ensureText(data?.fuel_pack?.playlist_mood, 'Warm focus with a little lift for the hard parts'),
       spotify_search: ensureText(data?.fuel_pack?.spotify_search, 'soft focus confidence study playlist'),
     },
-    vision_board: {
-      hero_phrase: ensureText(data?.vision_board?.hero_phrase, 'Make It Real'),
-      visual_keywords: uniqueStrings(data?.vision_board?.visual_keywords).slice(0, 3).length
-        ? uniqueStrings(data?.vision_board?.visual_keywords).slice(0, 3)
-        : ['calm desk glow', 'clear direction', 'future-self energy'],
-      milestones_to_celebrate: uniqueStrings(data?.vision_board?.milestones_to_celebrate).slice(0, 3).length
-        ? uniqueStrings(data?.vision_board?.milestones_to_celebrate).slice(0, 3)
-        : ['First visible win', 'A full week of follow-through', 'A moment of real traction'],
-      color_theme: ['purple', 'teal', 'coral', 'amber'].includes(data?.vision_board?.color_theme)
-        ? data.vision_board.color_theme
-        : ['purple', 'teal', 'coral', 'amber'].includes(data?.color_theme)
-          ? data.color_theme
-          : 'purple',
-    },
+    vision_board: normalizeVisionBoard(
+      data?.vision_board,
+      form,
+      ['purple', 'teal', 'coral', 'amber'].includes(data?.color_theme) ? data.color_theme : 'purple',
+    ),
     reminders: {
       suggested_times: uniqueStrings(data?.reminders?.suggested_times).slice(0, 2).length
         ? uniqueStrings(data?.reminders?.suggested_times).slice(0, 2)
@@ -443,7 +677,7 @@ function normalizeCalendarSuggestions(suggestions, tasks, freeBlocks) {
 }
 
 function normalizeDailyPlan(data, state, freeBlocks, options = {}) {
-  const tasks = normalizeTaskList(data?.todays_tasks, freeBlocks, 'today', state.goalData.goal_title);
+  const tasks = normalizeTaskList(data?.todays_tasks, freeBlocks, 'today', state.meta.formSnapshot || { goal: state.goalData.goal_title });
   const daysToDeadline = getDaysUntilDeadline(state.meta.deadline);
   const tasksDoneToday = tasks.filter((task) => state.completedTaskIds.includes(task.id)).length;
   const tasksRemainingToday = tasks.length - tasksDoneToday;
@@ -514,6 +748,11 @@ Rules:
 - Return a stable schema even when the user input is messy.
 - If free time is empty or fragmented, create micro-tasks in the 5 to 10 minute range and use null for any calendar_block that does not truly fit.
 - If the timeline is too tight, say so gently through the plan and make the roadmap smaller instead of pretending the scope is easy.
+- Make the roadmap feel unique to the exact goal. Use domain nouns and deliverables from the goal itself.
+- Avoid generic phrases like "build proof", "practice visible skill", "clarify the target", or "ship the next step".
+- For PM or APM goals, include things like product portfolio work, coffee chats, company research, mock interviews, resume edits, and outreach when relevant.
+- For software internship goals, include project polish, GitHub or resume improvements, targeted applications, technical practice, and referral outreach when relevant.
+- For grad school goals, include SOP drafts, recommender asks, program research, and deadline checks when relevant.
 
 Generate a complete Vividia roadmap. Return ONLY valid JSON matching this exact schema:
 
@@ -566,6 +805,8 @@ Generate a complete Vividia roadmap. Return ONLY valid JSON matching this exact 
     "hero_phrase": "string",
     "visual_keywords": ["string", "string", "string"],
     "milestones_to_celebrate": ["string", "string", "string"],
+    "dream_scene_prompt": "string - describe a single outcome image that visually represents their dream life or result",
+    "dream_scene_caption": "string - one sentence describing what this image represents",
     "color_theme": "string"
   },
   "reminders": {
@@ -597,6 +838,8 @@ Rules:
 - Return a stable schema even when the user input is messy.
 - If no calendar block fits, set calendar_block to null instead of forcing it.
 - If today is full or fragmented, keep tasks between 5 and 10 minutes and make the tone calming, not guilty.
+- Make today's tasks concrete to this goal, not generic. Use the actual nouns from the user's target role, application, portfolio, interviews, outreach, or deliverables.
+- Avoid repeating the same task titles across the day unless the user truly needs repetition.
 
 Generate today's personalized plan. Return ONLY valid JSON:
 
